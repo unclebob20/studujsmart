@@ -48,6 +48,9 @@ def create_app(config_name='default'):
     from app.models.question import QuestionTemplate, Question
     from app.models.test import TestSession, UserAnswer
     from app.models.gamification import Badge, UserBadge
+    from app.routes.auth import init_oauth
+
+    init_oauth(app)
 
     # User loader for Flask-Login
     @login_manager.user_loader

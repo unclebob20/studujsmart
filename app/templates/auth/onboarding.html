@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Nastavenie profilu - ŠtúdujSmart.sk{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-indigo-50 to-purple-50">
+    <div class="max-w-2xl w-full">
+
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">
+                Vitaj v ŠtúdujSmart! 🎉
+            </h1>
+            <p class="mt-2 text-gray-600">
+                Povedz nám o sebe, aby sme ti mohli pomôcť lepšie
+            </p>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-xl p-8">
+            <form method="POST" action="{{ url_for('auth.onboarding') }}" class="space-y-6">
+
+                <!-- Name -->
+                <div>
+                    <label for="full_name" class="block text-sm font-medium text-gray-700 mb-2">
+                        Ako sa voláš? *
+                    </label>
+                    <input id="full_name" name="full_name" type="text" required
+                           placeholder="Tvoje meno"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <!-- Grade -->
+                <div>
+                    <label for="grade" class="block text-sm font-medium text-gray-700 mb-2">
+                        V ktorom si ročníku? *
+                    </label>
+                    <select id="grade" name="grade" required
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="">Vyber ročník...</option>
+                        <option value="1">1. ročník (stredná škola)</option>
+                        <option value="2">2. ročník (stredná škola)</option>
+                        <option value="3">3. ročník (stredná škola)</option>
+                        <option value="4">4. ročník (stredná škola)</option>
+                    </select>
+                </div>
+
+                <!-- Birth Year -->
+                <div>
+                    <label for="birth_year" class="block text-sm font-medium text-gray-700 mb-2">
+                        Rok narodenia *
+                    </label>
+                    <input id="birth_year" name="birth_year" type="number" required
+                           min="2000" max="2015" placeholder="napr. 2008"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <!-- Goal -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Čo je tvoj cieľ? *
+                    </label>
+                    <div class="space-y-3">
+                        <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-500 transition">
+                            <input type="radio" name="goal" value="matura" required class="h-4 w-4 text-indigo-600">
+                            <div class="ml-3">
+                                <div class="font-medium text-gray-900">Príprava na maturu 🎓</div>
+                                <div class="text-sm text-gray-500">Chcem sa pripraviť na maturitnú skúšku</div>
+                            </div>
+                        </label>
+
+                        <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-500 transition">
+                            <input type="radio" name="goal" value="kontrola" class="h-4 w-4 text-indigo-600">
+                            <div class="ml-3">
+                                <div class="font-medium text-gray-900">Príprava na písomky 📝</div>
+                                <div class="text-sm text-gray-500">Chcem sa pripraviť na kontrolné práce</div>
+                            </div>
+                        </label>
+
+                        <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-500 transition">
+                            <input type="radio" name="goal" value="learning" class="h-4 w-4 text-indigo-600">
+                            <div class="ml-3">
+                                <div class="font-medium text-gray-900">Všeobecné vzdelávanie 📚</div>
+                                <div class="text-sm text-gray-500">Chcem sa len učiť a zlepšovať</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Subjects -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-3">
+                        Ktoré predmety ťa zaujímajú? * <span class="text-gray-500 font-normal">(vyber aspoň 1)</span>
+                    </label>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        {% for subject in subjects %}
+                        <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-indigo-500 transition">
+                            <input type="checkbox" name="subjects" value="{{ subject.id }}"
+                                   class="h-4 w-4 text-indigo-600 rounded">
+                            <div class="ml-3">
+                                <div class="font-medium text-gray-900">
+                                    {{ subject.icon }} {{ subject.name_sk }}
+                                </div>
+                            </div>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Submit -->
+                <button type="submit"
+                        class="w-full py-4 px-6 text-white font-medium rounded-lg gradient-bg hover:opacity-90 transition-all transform hover:scale-105">
+                    Začať sa učiť! 🚀
+                </button>
+            </form>
+        </div>
+
+        <!-- Progress Indicator -->
+        <div class="mt-6 text-center text-sm text-gray-500">
+            Krok 2 z 2 - Už takmer tam! 🎯
+        </div>
+    </div>
+</div>
+
+<script>
+    // Validate at least one subject is selected
+    const form = document.querySelector('form');
+    form.addEventListener('submit', (e) => {
+        const checkboxes = document.querySelectorAll('input[name="subjects"]:checked');
+        if (checkboxes.length === 0) {
+            e.preventDefault();
+            alert('Prosím, vyber aspoň jeden predmet!');
+        }
+    });
+</script>
+{% endblock %}
