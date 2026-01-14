@@ -30,10 +30,14 @@ class TestSession(db.Model):
 
     # Relationships
     answers = db.relationship('UserAnswer', backref='session', cascade='all, delete-orphan')
+    subject = db.relationship('Subject')
 
     def calculate_results(self):
         """Calculate and store test results"""
-        correct = sum(1 for a in self.answers if a.is_correct)
+        # FIX: Convert relationship to list using .all()
+        answers = self.answers.all() if hasattr(self.answers, 'all') else list(self.answers)
+
+        correct = sum(1 for a in answers if a.is_correct)
         self.score = correct
         self.percentage = (correct / self.total_questions) * 100 if self.total_questions > 0 else 0
 
@@ -43,7 +47,6 @@ class TestSession(db.Model):
 
     def __repr__(self):
         return f'<TestSession {self.id} user={self.user_id}>'
-
 
 class UserAnswer(db.Model):
     """User's answer to a question"""
@@ -60,12 +63,15 @@ class UserAnswer(db.Model):
     # Explanation tracking
     explanation_viewed = db.Column(db.Boolean, default=False)
     explanation_viewed_at = db.Column(db.DateTime)
+    ai_explanation = db.Column(db.Text)  # ADD THIS LINE
 
     time_spent_seconds = db.Column(db.Integer)
     answered_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Relationships
     question = db.relationship('Question')
-
     def __repr__(self):
         return f'<UserAnswer session={self.session_id} question={self.question_id}>'
+
+
+
