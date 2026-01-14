@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Výsledky testu - ŠtúdujSmart.sk{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-4">
+
+        <!-- Results Header -->
+        <div class="bg-white rounded-2xl shadow-lg p-8 mb-6 border border-gray-200 text-center">
+            <div class="text-6xl mb-4">
+                {% if test_session.percentage >= 80 %}🎉
+                {% elif test_session.percentage >= 60 %}👏
+                {% else %}💪{% endif %}
+            </div>
+
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Test dokončený!</h1>
+            <p class="text-gray-600 mb-6">{{ test_session.subject.name_sk }}</p>
+
+            <!-- Score -->
+            <div class="inline-block">
+                <div class="text-6xl font-bold mb-2"
+                     class="{% if test_session.percentage >= 80 %}text-green-600
+                            {% elif test_session.percentage >= 60 %}text-yellow-600
+                            {% else %}text-red-600{% endif %}">
+                    {{ test_session.percentage|round(0)|int }}%
+                </div>
+                <p class="text-gray-600">
+                    {{ test_session.score }} z {{ test_session.total_questions }} správne
+                </p>
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-3 gap-6 mt-8 pt-8 border-t border-gray-200">
+                <div>
+                    <p class="text-sm text-gray-500">Čas</p>
+                    <p class="text-2xl font-semibold text-gray-900">
+                        {% if test_session.time_spent_seconds %}
+                        {{ (test_session.time_spent_seconds // 60)|int }}:{{ '%02d'|format(test_session.time_spent_seconds % 60) }}
+                        {% else %}--:--{% endif %}
+                    </p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">XP získané</p>
+                    <p class="text-2xl font-semibold text-indigo-600">+{{ xp_earned }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Nová úroveň</p>
+                    <p class="text-2xl font-semibold text-gray-900">{{ current_user.level }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Review Answers -->
+        <div class="bg-white rounded-2xl shadow-sm p-8 mb-6 border border-gray-200">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Prehľad odpovedí</h2>
+
+            <div class="space-y-6">
+                {% for answer in answers %}
+                <div class="border-l-4 pl-6 py-4
+                    {% if answer.is_correct %}border-green-500 bg-green-50
+                    {% else %}border-red-500 bg-red-50{% endif %}">
+
+                    <!-- Question -->
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-500 mb-1">Otázka {{ loop.index }}</p>
+                            <p class="text-gray-900 font-medium">{{ answer.question.question_text }}</p>
+                        </div>
+                        <div class="ml-4">
+                            {% if answer.is_correct %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                                ✓ Správne
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                                ✗ Nesprávne
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Answers -->
+                    <div class="mt-4 space-y-2">
+                        {% if not answer.is_correct %}
+                        <div class="flex items-center">
+                            <span class="text-sm text-gray-500 w-32">Tvoja odpoveď:</span>
+                            <span class="text-red-700 font-medium">{{ answer.user_answer }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="flex items-center">
+                            <span class="text-sm text-gray-500 w-32">Správna odpoveď:</span>
+                            <span class="text-green-700 font-medium">{{ answer.question.correct_answer }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Explanation -->
+                    {% if not answer.is_correct %}
+                    <div class="mt-4">
+                        {% if answer.explanation_viewed %}
+                        <div class="bg-white rounded-lg p-4 border border-gray-200">
+                            <p class="text-sm text-gray-700">{{ answer.ai_explanation }}</p>
+                        </div>
+                        {% else %}
+                        <button onclick="loadExplanation({{ answer.id }})"
+                                class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+                            💡 Zobraziť vysvetlenie
+                        </button>
+                        <div id="explanation-{{ answer.id }}" class="hidden mt-2 bg-white rounded-lg p-4 border border-gray-200">
+                            <div class="flex items-center justify-center py-4">
+                                <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex space-x-4">
+            <a href="{{ url_for('test.quick_test', subject_id=test_session.subject_id) }}"
+               class="flex-1 py-3 px-6 text-center border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition">
+                Opakovať podobný test
+            </a>
+            <a href="{{ url_for('dashboard.index') }}"
+               class="flex-1 py-3 px-6 text-center rounded-lg text-white font-medium transition"
+               style="background-color: {{ test_session.subject.color }}">
+                Späť na dashboard
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+async function loadExplanation(answerId) {
+    const container = document.getElementById(`explanation-${answerId}`);
+    container.classList.remove('hidden');
+
+    try {
+        const response = await fetch(`/api/answers/${answerId}/explanation`);
+        const data = await response.json();
+
+        container.innerHTML = `<p class="text-sm text-gray-700">${data.explanation}</p>`;
+    } catch (error) {
+        console.error('Error loading explanation:', error);
+        container.innerHTML = '<p class="text-sm text-red-600">Chyba pri načítaní vysvetlenia</p>';
+    }
+}
+</script>
+{% endblock %}

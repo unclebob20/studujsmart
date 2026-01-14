@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - ŠtúdujSmart.sk{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold gradient-bg bg-clip-text text-transparent">
+                        ŠtúdujSmart 🎓
+                    </h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-gray-600">{{ current_user.full_name }}</span>
+                    <a href="{{ url_for('auth.logout') }}"
+                       class="text-sm text-gray-600 hover:text-gray-900">
+                        Odhlásiť sa
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- Welcome Header -->
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-900">
+                Vitaj späť, {{ current_user.full_name }}! 👋
+            </h2>
+            <p class="mt-2 text-gray-600">
+                Pokračuj vo svojom učení a dosiahni svoje ciele
+            </p>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <!-- Level Card -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">Úroveň</p>
+                        <p class="text-3xl font-bold text-indigo-600">{{ current_user.level }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                        <span class="text-2xl">🏆</span>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="flex justify-between text-xs text-gray-600 mb-1">
+                        <span>{{ current_user.xp }} XP</span>
+                        <span>{{ xp_to_next_level }} do ďalšej úrovne</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-indigo-600 h-2 rounded-full"
+                             style="width: {{ xp_progress }}%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Streak Card -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">Séria dní</p>
+                        <p class="text-3xl font-bold text-orange-600">{{ current_user.streak_days }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                        <span class="text-2xl">🔥</span>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 mt-4">
+                    {% if current_user.streak_days > 0 %}
+                    Skvelé! Pokračuj každý deň!
+                    {% else %}
+                    Začni sériu dnes!
+                    {% endif %}
+                </p>
+            </div>
+
+            <!-- Tests Completed -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">Testov dokončených</p>
+                        <p class="text-3xl font-bold text-green-600">{{ tests_completed }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                        <span class="text-2xl">✅</span>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 mt-4">Tento týždeň: {{ tests_this_week }}</p>
+            </div>
+
+            <!-- Average Accuracy -->
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">Priemerná presnosť</p>
+                        <p class="text-3xl font-bold text-blue-600">{{ avg_accuracy }}%</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span class="text-2xl">🎯</span>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-500 mt-4">
+                    {% if avg_accuracy >= 80 %}Výborne!
+                    {% elif avg_accuracy >= 60 %}Dobrá práca!
+                    {% else %}Pokračuj v tréningu!{% endif %}
+                </p>
+            </div>
+        </div>
+
+        <!-- Your Subjects -->
+        <div class="mb-8">
+            <h3 class="text-xl font-bold text-gray-900 mb-4">Tvoje predmety</h3>
+
+            {% if subjects %}
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {% for subject in subjects %}
+                <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200 hover:shadow-md transition">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center">
+                            <span class="text-3xl mr-3">{{ subject.icon }}</span>
+                            <div>
+                                <h4 class="font-semibold text-gray-900">{{ subject.name_sk }}</h4>
+                                <p class="text-sm text-gray-500">
+                                    {% if subject.id in progress_data %}
+                                    {{ progress_data[subject.id].topics_count }} tém
+                                    {% else %}
+                                    Začni trénovať
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    {% if subject.id in progress_data %}
+                    <div class="mb-4">
+                        <div class="flex justify-between text-xs text-gray-600 mb-1">
+                            <span>Presnosť</span>
+                            <span>{{ progress_data[subject.id].accuracy }}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="h-2 rounded-full"
+                                 style="width: {{ progress_data[subject.id].accuracy }}%; background-color: {{ subject.color }}"></div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Quick Test Button -->
+                    <a href="{{ url_for('test.quick_test', subject_id=subject.id) }}"
+                       class="block w-full text-center py-2 px-4 rounded-lg text-sm font-medium text-white transition"
+                       style="background-color: {{ subject.color }}">
+                        Rýchly test
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+                <p class="text-yellow-800">Zatiaľ si nevybral žiadne predmety.</p>
+                <a href="{{ url_for('auth.onboarding') }}"
+                   class="text-yellow-900 font-medium hover:underline">
+                    Vyber predmety →
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Recommended Practice -->
+        {% if weak_topics %}
+        <div class="mb-8">
+            <h3 class="text-xl font-bold text-gray-900 mb-4">💡 Odporúčame dnes precvičiť</h3>
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                <div class="space-y-3">
+                    {% for topic in weak_topics[:3] %}
+                    <div class="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                        <div>
+                            <p class="font-medium text-gray-900">{{ topic.name_sk }}</p>
+                            <p class="text-sm text-gray-600">Presnosť: {{ topic.accuracy }}%</p>
+                        </div>
+                        <form method="POST" action="{{ url_for('test.create_test') }}" style="display: inline;">
+                            <input type="hidden" name="topic_id" value="{{ topic.id }}">
+                            <button type="submit" class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded">
+                                Začať test
+                            </button>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Recent Badges -->
+        {% if recent_badges %}
+        <div class="mb-8">
+            <h3 class="text-xl font-bold text-gray-900 mb-4">🏅 Nedávno získané odznaky</h3>
+            <div class="flex space-x-4 overflow-x-auto pb-4">
+                {% for user_badge in recent_badges %}
+                <div class="flex-shrink-0 bg-white rounded-xl shadow-sm p-4 border border-gray-200 text-center min-w-[150px]">
+                    <div class="text-4xl mb-2">{{ user_badge.badge.icon }}</div>
+                    <p class="font-medium text-gray-900 text-sm">{{ user_badge.badge.name_sk }}</p>
+                    <p class="text-xs text-gray-500 mt-1">+{{ user_badge.badge.xp_reward }} XP</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Recent Tests -->
+        {% if recent_tests %}
+        <div>
+            <h3 class="text-xl font-bold text-gray-900 mb-4">📊 Posledné testy</h3>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Predmet</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dátum</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Výsledok</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Čas</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for test in recent_tests %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <span class="mr-2">{{ test.subject.icon }}</span>
+                                    <span class="text-sm font-medium text-gray-900">{{ test.subject.name_sk }}</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ test.completed_at.strftime('%d.%m.%Y %H:%M') if test.completed_at else '-' }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 py-1 text-xs font-semibold rounded-full
+                                    {% if test.percentage >= 80 %}bg-green-100 text-green-800
+                                    {% elif test.percentage >= 60 %}bg-yellow-100 text-yellow-800
+                                    {% else %}bg-red-100 text-red-800{% endif %}">
+                                    {{ test.score }}/{{ test.total_questions }} ({{ test.percentage|round(0) }}%)
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {% if test.time_spent_seconds %}
+                                {{ (test.time_spent_seconds // 60)|int }}:{{ '%02d'|format(test.time_spent_seconds % 60) }}
+                                {% else %}-{% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
+                                <a href="{{ url_for('test.results', session_id=test.id) }}"
+                                   class="text-indigo-600 hover:text-indigo-900 font-medium">
+                                    Zobraziť →
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

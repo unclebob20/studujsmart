@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Rýchly test - {{ subject.name_sk }} - ŠtúdujSmart.sk{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-4">
+
+        <!-- Back Button -->
+        <a href="{{ url_for('dashboard.index') }}"
+           class="inline-flex items-center text-gray-600 hover:text-gray-900 mb-6">
+            ← Späť na dashboard
+        </a>
+
+        <!-- Subject Header -->
+        <div class="bg-white rounded-2xl shadow-sm p-8 mb-6 border border-gray-200">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <span class="text-6xl mr-4">{{ subject.icon }}</span>
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900">{{ subject.name_sk }}</h1>
+                        <p class="text-gray-600 mt-1">Rýchly test</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm text-gray-500">10 otázok</p>
+                    <p class="text-sm text-gray-500">Odhadovaný čas: 8-12 min</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Info -->
+        <div class="bg-white rounded-2xl shadow-sm p-8 mb-6 border border-gray-200">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Čo ťa čaká</h2>
+
+            <div class="space-y-4">
+                <div class="flex items-start">
+                    <span class="text-2xl mr-3">🎯</span>
+                    <div>
+                        <h3 class="font-semibold text-gray-900">Prispôsobené otázky</h3>
+                        <p class="text-gray-600 text-sm">AI vyberie témy, kde máš medzery v znalostiach</p>
+                    </div>
+                </div>
+
+                <div class="flex items-start">
+                    <span class="text-2xl mr-3">⚡</span>
+                    <div>
+                        <h3 class="font-semibold text-gray-900">Rýchle vyhodnotenie</h3>
+                        <p class="text-gray-600 text-sm">Okamžitá spätná väzba k tvojim odpovediam</p>
+                    </div>
+                </div>
+
+                <div class="flex items-start">
+                    <span class="text-2xl mr-3">💡</span>
+                    <div>
+                        <h3 class="font-semibold text-gray-900">AI vysvetlenia</h3>
+                        <p class="text-gray-600 text-sm">Detailné vysvetlenia ku každej chybe</p>
+                    </div>
+                </div>
+
+                <div class="flex items-start">
+                    <span class="text-2xl mr-3">📊</span>
+                    <div>
+                        <h3 class="font-semibold text-gray-900">Sledovanie pokroku</h3>
+                        <p class="text-gray-600 text-sm">Tvoje výsledky sa zaznamenajú a sledujú</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Start Button -->
+        <form method="POST" action="{{ url_for('test.start_quick_test', subject_id=subject.id) }}">
+            <button type="submit"
+                    class="w-full py-4 px-6 text-white text-lg font-semibold rounded-xl shadow-lg hover:opacity-90 transition transform hover:scale-105"
+                    style="background-color: {{ subject.color }}">
+                Začať test 🚀
+            </button>
+        </form>
+
+        <p class="text-center text-sm text-gray-500 mt-4">
+            Môžeš kedykoľvek uložiť a vrátiť sa neskôr
+        </p>
+    </div>
+</div>
+{% endblock %}

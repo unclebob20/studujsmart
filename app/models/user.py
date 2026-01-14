@@ -75,13 +75,12 @@ class User(UserMixin, db.Model):
             return True  # Leveled up!
         return False
 
-    @staticmethod
-    def calculate_level():
+    def calculate_level(self):
         """Calculate level based on XP"""
         # Level thresholds: 1=0, 2=100, 3=250, 4=500, 5=1000, etc.
         thresholds = [0, 100, 250, 500, 1000, 2000, 4000, 7000, 11000, 16000]
         for i, threshold in enumerate(thresholds):
-            if User.xp < threshold:
+            if self.xp < threshold:  # ✅ Use self.xp, not User.xp
                 return i
         return len(thresholds)
 

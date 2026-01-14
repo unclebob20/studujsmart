@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+
+{% block title %}Test - {{ test_session.subject.name_sk }} - ŠtúdujSmart.sk{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+
+    <!-- Top Bar -->
+    <div class="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div class="max-w-4xl mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <span class="text-2xl mr-2">{{ test_session.subject.icon }}</span>
+                    <h1 class="text-lg font-semibold text-gray-900">{{ test_session.subject.name_sk }}</h1>
+                </div>
+
+                <div class="flex items-center space-x-6">
+                    <!-- Progress -->
+                    <div class="text-sm text-gray-600">
+                        Otázka <span class="font-semibold" id="current-question">1</span> / {{ test_session.total_questions }}
+                    </div>
+
+                    <!-- Timer -->
+                    <div class="flex items-center text-sm text-gray-600">
+                        <span class="mr-1">⏱</span>
+                        <span id="timer">00:00</span>
+                    </div>
+
+                    <!-- Save & Exit -->
+                    <button onclick="confirmExit()"
+                            class="text-sm text-gray-600 hover:text-gray-900">
+                        Uložiť a ukončiť
+                    </button>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="w-full bg-gray-200 rounded-full h-2 mt-4">
+                <div id="progress-bar" class="h-2 rounded-full transition-all duration-300"
+                     style="width: 0%; background-color: {{ test_session.subject.color }}"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Question Area -->
+    <div class="max-w-4xl mx-auto px-4 py-8">
+        <div id="question-container" class="bg-white rounded-2xl shadow-sm p-8 border border-gray-200">
+            <!-- Question will be loaded here via JavaScript -->
+            <div class="text-center py-12">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+                <p class="text-gray-500 mt-4">Načítavam otázku...</p>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="flex justify-between mt-6">
+            <button id="prev-btn" onclick="previousQuestion()"
+                    class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled>
+                ← Predchádzajúca
+            </button>
+
+            <button id="next-btn" onclick="nextQuestion()"
+                    class="px-6 py-3 rounded-lg text-white font-medium"
+                    style="background-color: {{ test_session.subject.color }}">
+                Ďalšia →
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+let testSessionId = {{ test_session.id }};
+let questions = [];
+let currentQuestionIndex = 0;
+let answers = {};
+let startTime = Date.now();
+let timerInterval;
+
+// Start timer
+timerInterval = setInterval(() => {
+    let elapsed = Math.floor((Date.now() - startTime) / 1000);
+    let minutes = Math.floor(elapsed / 60);
+    let seconds = elapsed % 60;
+    document.getElementById('timer').textContent =
+        `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}, 1000);
+
+// Load questions
+async function loadQuestions() {
+    try {
+        const response = await fetch(`/test/tests/${testSessionId}/questions`);
+        const data = await response.json();
+        questions = data.questions;
+
+        if (questions.length > 0) {
+            renderQuestion(0);
+        }
+    } catch (error) {
+        console.error('Error loading questions:', error);
+        alert('Chyba pri načítaní otázok. Skús obnoviť stránku.');
+    }
+}
+
+function renderQuestion(index) {
+    currentQuestionIndex = index;
+    const question = questions[index];
+
+    // Update UI
+    document.getElementById('current-question').textContent = index + 1;
+    document.getElementById('progress-bar').style.width =
+        `${((index + 1) / questions.length) * 100}%`;
+
+    // Update navigation buttons
+    document.getElementById('prev-btn').disabled = index === 0;
+    const nextBtn = document.getElementById('next-btn');
+    if (index === questions.length - 1) {
+        nextBtn.textContent = 'Dokončiť test ✓';
+        nextBtn.onclick = finishTest;
+    } else {
+        nextBtn.textContent = 'Ďalšia →';
+        nextBtn.onclick = nextQuestion;
+    }
+
+    // Render question content
+    let html = `
+        <div class="mb-6">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-gray-500">Otázka ${index + 1}</span>
+                <span class="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+                    ${question.difficulty === 'easy' ? 'Ľahká' : question.difficulty === 'medium' ? 'Stredná' : 'Ťažká'}
+                </span>
+            </div>
+            <h2 class="text-xl font-semibold text-gray-900 mb-6">${question.question_text}</h2>
+        </div>
+    `;
+
+    // Render answer input based on question type
+    if (question.question_type === 'single_choice') {
+        html += '<div class="space-y-3">';
+        question.choices.forEach((choice, i) => {
+            const letter = choice.charAt(0);
+            const isSelected = answers[question.id] === letter;
+            html += `
+                <label class="flex items-center p-4 border-2 rounded-lg cursor-pointer transition
+                    ${isSelected ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'}">
+                    <input type="radio" name="answer" value="${letter}"
+                           ${isSelected ? 'checked' : ''}
+                           onchange="saveAnswer(${question.id}, '${letter}')"
+                           class="h-4 w-4 text-indigo-600">
+                    <span class="ml-3 text-gray-900">${choice}</span>
+                </label>
+            `;
+        });
+        html += '</div>';
+    } else if (question.question_type === 'numeric') {
+        const savedAnswer = answers[question.id] || '';
+        html += `
+            <input type="number"
+                   value="${savedAnswer}"
+                   oninput="saveAnswer(${question.id}, this.value)"
+                   placeholder="Zadaj svoju odpoveď"
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                   step="0.01">
+        `;
+    } else if (question.question_type === 'fill_blank') {
+        const savedAnswer = answers[question.id] || '';
+        html += `
+            <input type="text"
+                   value="${savedAnswer}"
+                   oninput="saveAnswer(${question.id}, this.value)"
+                   placeholder="Doplň správnu odpoveď"
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        `;
+    }
+
+    document.getElementById('question-container').innerHTML = html;
+}
+
+function saveAnswer(questionId, answer) {
+    answers[questionId] = answer;
+
+    // Save to backend
+    fetch(`/test/tests/${testSessionId}/answer`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            question_id: questionId,
+            answer: answer,
+            time_spent: Math.floor((Date.now() - startTime) / 1000)
+        })
+    }).catch(err => console.error('Error saving answer:', err));
+}
+
+function previousQuestion() {
+    if (currentQuestionIndex > 0) {
+        renderQuestion(currentQuestionIndex - 1);
+    }
+}
+
+function nextQuestion() {
+    if (currentQuestionIndex < questions.length - 1) {
+        renderQuestion(currentQuestionIndex + 1);
+    }
+}
+
+function confirmExit() {
+    if (confirm('Naozaj chceš ukončiť test? Tvoj pokrok bude uložený.')) {
+        window.location.href = '/dashboard';
+    }
+}
+
+// Prevent accidental page close
+const handleBeforeUnload = (e) => {
+    e.preventDefault();
+    return true;
+};
+
+// Prevent accidental page close (only while test is in progress)
+window.addEventListener('beforeunload', handleBeforeUnload);
+
+async function finishTest() {
+    // Check if all questions answered
+    const unanswered = questions.filter(q => !answers[q.id]).length;
+
+    if (unanswered > 0) {
+        const confirmed = confirm(`Máš ${unanswered} nezodpovedané otázky. Naozaj chceš dokončiť test?`);
+        if (!confirmed) return;
+    }
+
+    try {
+        clearInterval(timerInterval);
+
+        // Remove the beforeunload listener BEFORE the request
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+
+        const response = await fetch(`/test/tests/${testSessionId}/complete`, {
+            method: 'POST'
+        });
+
+        if (response.ok) {
+            window.location.href = `/test/${testSessionId}/results`;
+        } else {
+            alert('Chyba pri dokončovaní testu');
+            // Re-add listener if something went wrong
+            window.addEventListener('beforeunload', handleBeforeUnload);
+        }
+    } catch (error) {
+        console.error('Error completing test:', error);
+        alert('Chyba pri dokončovaní testu');
+        // Re-add listener if something went wrong
+        window.addEventListener('beforeunload', handleBeforeUnload);
+    }
+}
+
+// Load questions on page load
+loadQuestions();
+</script>
+{% endblock %}
