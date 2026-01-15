@@ -259,48 +259,40 @@ def api_get_explanation(answer_id):
     if answer.user_id != current_user.id:
         return jsonify({'error': 'Unauthorized'}), 403
 
-    # Check subscription limits
-    from app.models.subscription import UsageLimit
-    usage = UsageLimit.get_today_usage(current_user.id)
-    limits = current_user.subscription.get_plan_limits()
-
-    if not limits['explanations']:
+    # If already generated, return it
+    if answer.ai_explanation:
         return jsonify({
-            'error': 'Upgrade na Basic alebo Premium pre vysvetlenia'
-        }), 403
+            'explanation': answer.ai_explanation
+        })
 
+    # Generate new explanation
     ai_service = get_ai_service()
 
     try:
-        # Generate explanation if not already done
-        if not answer.explanation_viewed:
-            explanation = ai_service.generate_explanation(
-                question_text=answer.question.question_text,
-                correct_answer=answer.question.correct_answer,
-                user_answer=answer.user_answer,
-                subject=answer.session.subject.name_sk
-            )
+        explanation = ai_service.generate_explanation(
+            question_text=answer.question.question_text,
+            correct_answer=answer.question.correct_answer,
+            user_answer=answer.user_answer,
+            subject=answer.session.subject.name_sk
+        )
 
-            # Store explanation
-            answer.ai_explanation = explanation
-            answer.explanation_viewed = True
-            answer.explanation_viewed_at = datetime.utcnow()
-
-            # Track usage
-            usage.ai_explanations_viewed += 1
-
-            db.session.commit()
+        # Store explanation
+        answer.ai_explanation = explanation
+        answer.explanation_viewed = True
+        answer.explanation_viewed_at = datetime.utcnow()
+        db.session.commit()
 
         return jsonify({
-            'explanation': answer.ai_explanation or answer.question.explanation
+            'explanation': explanation
         })
 
     except Exception as e:
         print(f"Error generating explanation: {e}")
+        # Fallback to template explanation if available
+        fallback = answer.question.explanation or 'Vysvetlenie nedostupné'
         return jsonify({
-            'explanation': answer.question.explanation or 'Vysvetlenie nedostupné'
+            'explanation': fallback
         })
-
 
 @test_bp.route('/create', methods=['POST'])
 @login_required

@@ -6,6 +6,7 @@ import json
 import random
 from typing import Dict, List, Optional
 from anthropic import Anthropic
+from openai import OpenAI
 from app import redis_client
 
 
@@ -14,13 +15,20 @@ class AIService:
 
     def __init__(self):
         try:
-            self.client = Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
-            self.model = "claude-haiku-4-20250514"
+            # Keep Anthropic for question generation (still best for this)
+            self.anthropic_client = Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
+            self.anthropic_model = "claude-haiku-4-20250514"
+
+            # Use OpenAI for explanations (cheaper, better quality for Slovak)
+            self.openai_client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+            self.openai_model = "gpt-4o-mini"
+
             self.enabled = True
         except Exception as e:
             print(f"Warning: AI service failed to initialize: {e}")
             print("Falling back to non-AI mode")
-            self.client = None
+            self.anthropic_client = None
+            self.openai_client = None
             self.enabled = False
 
     def generate_question_from_template(self, template) -> Dict:
@@ -78,20 +86,19 @@ class AIService:
 
     def _calculate_answer(self, template, variables: Dict) -> str:
         """Calculate correct answer from template formula"""
-        # Simple example for quadratic equations: ax² + bx + c = 0
-        # In real implementation, use eval() safely or sympy
+        # Simple example for quadratic equations: axÂ² + bx + c = 0
 
         if 'quadratic' in template.question_template.lower():
             a = variables.get('a', 1)
             b = variables.get('b', 0)
             c = variables.get('c', 0)
 
-            # Quadratic formula: x = (-b ± √(b²-4ac)) / 2a
+            # Quadratic formula: x = (-b Â± âˆš(bÂ²-4ac)) / 2a
             discriminant = b ** 2 - 4 * a * c
             if discriminant >= 0:
                 x1 = (-b + discriminant ** 0.5) / (2 * a)
                 x2 = (-b - discriminant ** 0.5) / (2 * a)
-                return f"x₁={x1:.1f}, x₂={x2:.1f}"
+                return f"xâ‚={x1:.1f}, xâ‚‚={x2:.1f}"
             else:
                 return "No real solutions"
 
@@ -132,8 +139,8 @@ Respond with ONLY a JSON object in this format:
 Make the explanation simple and in Slovak language."""
 
         try:
-            response = self.client.messages.create(
-                model=self.model,
+            response = self.anthropic_client.messages.create(
+                model=self.anthropic_model,
                 max_tokens=500,
                 messages=[{"role": "user", "content": prompt}]
             )
@@ -184,7 +191,7 @@ Make the explanation simple and in Slovak language."""
             subject: str = "matematika"
     ) -> str:
         """
-        Generate explanation for why answer is correct/incorrect
+        Generate explanation for why answer is correct/incorrect using GPT-4o Mini
 
         Args:
             question_text: The question
@@ -215,13 +222,13 @@ Vysvetli po slovensky:
 Maximálne 150 slov, jednoduchým jazykom."""
 
         try:
-            response = self.client.messages.create(
-                model=self.model,
+            response = self.openai_client.chat.completions.create(
+                model=self.openai_model,
                 max_tokens=400,
                 messages=[{"role": "user", "content": prompt}]
             )
 
-            explanation = response.content[0].text.strip()
+            explanation = response.choices[0].message.content.strip()
 
             # Cache for 30 days
             redis_client.setex(cache_key, 2592000, explanation)
@@ -230,4 +237,4 @@ Maximálne 150 slov, jednoduchým jazykom."""
 
         except Exception as e:
             print(f"Explanation generation error: {e}")
-            return "Vyhovenie nedostupné. Skús to znova neskôr."
+            return "Vysvetlenie nedostupné. Skús to znova neskôr."

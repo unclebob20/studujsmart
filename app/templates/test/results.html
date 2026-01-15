@@ -140,7 +140,7 @@ async function loadExplanation(answerId) {
     container.classList.remove('hidden');
 
     try {
-        const response = await fetch(`/api/answers/${answerId}/explanation`);
+        const response = await fetch(`/test/answers/${answerId}/explanation`);
         const data = await response.json();
 
         container.innerHTML = `<p class="text-sm text-gray-700">${data.explanation}</p>`;
