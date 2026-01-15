@@ -77,6 +77,11 @@ class UserTopicProgress(db.Model):
 
     def update_progress(self, is_correct):
         """Update progress after answering a question"""
+        if self.total_questions is None:
+            self.total_questions = 0
+        if self.correct_answers is None:
+            self.correct_answers = 0
+
         self.total_questions += 1
         if is_correct:
             self.correct_answers += 1

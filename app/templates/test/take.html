@@ -1,6 +1,7 @@
 {% extends "base.html" %}
+{% include 'test/instructions_modal.html' %}
 
-{% block title %}Test - {{ test_session.subject.name_sk }} - ŠtúdujSmart.sk{% endblock %}
+{% block title %}Test - {{ test_session.subject.name_sk }} - ŠtudujSmart.sk{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-gray-50">
@@ -43,7 +44,7 @@
     </div>
 
     <!-- Question Area -->
-    <div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="max-w-4xl mx-auto px-4 py-8" data-test-id="{{ test_session.id }}">
         <div id="question-container" class="bg-white rounded-2xl shadow-sm p-8 border border-gray-200">
             <!-- Question will be loaded here via JavaScript -->
             <div class="text-center py-12">
@@ -156,25 +157,39 @@ function renderQuestion(index) {
     } else if (question.question_type === 'numeric') {
         const savedAnswer = answers[question.id] || '';
         html += `
-            <input type="number"
+            <input type="text"
+                   id="answer-input"
                    value="${savedAnswer}"
                    oninput="saveAnswer(${question.id}, this.value)"
+                   onkeypress="handleEnter(event)"
                    placeholder="Zadaj svoju odpoveď"
                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                   step="0.01">
+                   step="0.01"
+                   autofocus>
         `;
     } else if (question.question_type === 'fill_blank') {
         const savedAnswer = answers[question.id] || '';
         html += `
             <input type="text"
+                   id="answer-input"
                    value="${savedAnswer}"
                    oninput="saveAnswer(${question.id}, this.value)"
+                   onkeypress="handleEnter(event)"
                    placeholder="Doplň správnu odpoveď"
-                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                   autofocus>
         `;
     }
 
     document.getElementById('question-container').innerHTML = html;
+
+    // Focus input field if it exists
+    setTimeout(() => {
+        const inputField = document.getElementById('answer-input');
+        if (inputField) {
+            inputField.focus();
+        }
+    }, 0);
 }
 
 function saveAnswer(questionId, answer) {
@@ -190,6 +205,17 @@ function saveAnswer(questionId, answer) {
             time_spent: Math.floor((Date.now() - startTime) / 1000)
         })
     }).catch(err => console.error('Error saving answer:', err));
+}
+
+function handleEnter(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        if (currentQuestionIndex < questions.length - 1) {
+            nextQuestion();
+        } else {
+            finishTest();
+        }
+    }
 }
 
 function previousQuestion() {
