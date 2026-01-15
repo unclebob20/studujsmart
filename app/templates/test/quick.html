@@ -83,3 +83,15 @@
     </div>
 </div>
 {% endblock %}
+
+<script>
+    // Show instructions modal when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+        // Modal is already visible from base.html include
+        // Just make sure overlay is displayed
+        const overlay = document.getElementById('instructionsOverlay');
+        if (overlay) {
+            overlay.style.display = 'flex';
+        }
+    });
+</script>

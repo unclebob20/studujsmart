@@ -178,27 +178,15 @@ class TestService:
 
     def _check_answer(self, question: Question, user_answer: str) -> bool:
         """Check if user's answer is correct"""
-        correct = question.correct_answer.strip().lower()
-        user = user_answer.strip().lower()
+        correct = question.correct_answer.strip().lower().replace(' ', '')
+        user = user_answer.strip().lower().replace(' ', '')
 
-        # For multiple choice, just compare letters
         if question.question_type == 'single_choice':
-            # Extract letter (A, B, C, D)
-            if len(user) == 1:
-                return user == correct.lower()
-            # User might have typed full answer
-            return user[0] == correct.lower()
+            user_letter = user[0] if len(user) > 0 else ''
+            correct_letter = correct[0] if len(correct) > 0 else ''
+            return user_letter == correct_letter
 
-        # For numeric, allow small margin of error
-        if question.question_type == 'numeric':
-            try:
-                user_num = float(user)
-                correct_num = float(correct)
-                return abs(user_num - correct_num) < 0.01
-            except ValueError:
-                return False
-
-        # For text, exact match
+        # For numeric and fill_blank, exact string match after normalization
         return user == correct
 
     def _update_topic_progress(self, test: TestSession):

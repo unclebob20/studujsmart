@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokyny na test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 700px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-header {
+            background: linear-gradient(to right, #2563eb, #1d4ed8);
+            color: white;
+            padding: 24px;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 24px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            hover: opacity 0.8;
+            transition: opacity 0.2s;
+        }
+
+        .close-btn:hover {
+            opacity: 0.8;
+        }
+
+        .modal-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            space: 24px;
+        }
+
+        .section {
+            margin-bottom: 24px;
+        }
+
+        .section h3 {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 12px;
+        }
+
+        .instruction-list {
+            list-style: none;
+            space: 8px;
+        }
+
+        .instruction-list li {
+            display: flex;
+            gap: 12px;
+            color: #374151;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .instruction-list li:before {
+            content: "✓";
+            color: #10b981;
+            font-weight: bold;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .answer-format {
+            background-color: #f0f9ff;
+            border-left: 4px solid #3b82f6;
+            padding: 16px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+        }
+
+        .answer-format.numeric {
+            background-color: #fffbeb;
+            border-left-color: #f59e0b;
+        }
+
+        .answer-format.text {
+            background-color: #f0fdf4;
+            border-left-color: #10b981;
+        }
+
+        .answer-format h4 {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #1f2937;
+        }
+
+        .answer-format p {
+            font-size: 14px;
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .code-example {
+            background: white;
+            padding: 12px;
+            border-radius: 4px;
+            border: 1px solid #d1d5db;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            margin: 8px 0;
+            overflow-x: auto;
+        }
+
+        .code-example .correct {
+            color: #059669;
+        }
+
+        .code-example .incorrect {
+            color: #dc2626;
+        }
+
+        .tip-box {
+            background-color: #faf5ff;
+            border-left: 4px solid #a855f7;
+            padding: 16px;
+            border-radius: 6px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .tip-box strong {
+            color: #7c2d12;
+            flex-shrink: 0;
+        }
+
+        .tip-box p {
+            font-size: 14px;
+            color: #5b21b6;
+            line-height: 1.5;
+        }
+
+        .modal-footer {
+            border-top: 1px solid #e5e7eb;
+            padding: 24px;
+            background-color: #f9fafb;
+            border-radius: 0 0 12px 12px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #374151;
+            flex: 1;
+            margin-right: 12px;
+        }
+
+        .checkbox-label input {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .btn {
+            padding: 10px 24px;
+            border-radius: 6px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .btn-secondary {
+            background-color: white;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+
+        .btn-secondary:hover {
+            background-color: #f3f4f6;
+        }
+
+        .btn-primary {
+            background-color: #2563eb;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background-color: #1d4ed8;
+        }
+
+        .btn-primary:disabled {
+            background-color: #d1d5db;
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 640px) {
+            .modal {
+                max-height: 90vh;
+            }
+
+            .modal-header h2 {
+                font-size: 20px;
+            }
+
+            .modal-footer {
+                flex-direction: column;
+            }
+
+            .checkbox-label {
+                margin-right: 0;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="modal-overlay" id="instructionsOverlay">
+        <div class="modal">
+            <!-- Header -->
+            <div class="modal-header">
+                <h2>Pokyny na test</h2>
+                <button class="close-btn" onclick="closeModal()">✕</button>
+            </div>
+
+            <!-- Content -->
+            <div class="modal-content">
+                <!-- General Instructions -->
+                <div class="section">
+                    <h3>Obecné pokyny</h3>
+                    <ul class="instruction-list">
+                        <li>Máte čas na vyriešenie všetkých otázok</li>
+                        <li>Môžete sa vracať medzi otázkami</li>
+                        <li>Všetky otázky sú povinné</li>
+                    </ul>
+                </div>
+
+                <!-- Answer Formats -->
+                <div class="section">
+                    <h3>Ako zadávať odpovede</h3>
+
+                    <!-- Single Choice -->
+                    <div class="answer-format">
+                        <h4>📝 Výber z možností (A, B, C, D)</h4>
+                        <p>Zadajte <strong>iba jedno písmeno</strong>:</p>
+                        <div class="code-example">
+                            A &nbsp;&nbsp; B &nbsp;&nbsp; C &nbsp;&nbsp; D
+                        </div>
+                        <p style="font-size: 12px; color: #6b7280;">Príklad: Odpoveď je B → zadajte <strong>B</strong></p>
+                    </div>
+
+                    <!-- Numeric -->
+                    <div class="answer-format numeric">
+                        <h4>🔢 Numerické otázky</h4>
+                        <p>Zadajte <strong>vzorec alebo výraz</strong>, nie iba výsledok:</p>
+                        <div class="code-example">
+                            <div>Otázka: Vyriešte: 8x = 88</div>
+                            <div style="margin-top: 8px;"><span class="correct">✓ Správne: x = 88 / 8</span></div>
+                            <div style="margin-top: 4px;"><span class="incorrect">✗ Nesprávne: 11</span></div>
+                        </div>
+                        <p style="font-size: 12px; color: #92400e;">Vzorec sa automaticky vyhodnotí. Môžete použiť: +, −, ×, ÷, ^, √</p>
+                    </div>
+
+                    <!-- Fill in the Blank -->
+                    <div class="answer-format text">
+                        <h4>✏️ Doplnenie (text)</h4>
+                        <p>Zadajte <strong>presný text alebo vzorec</strong>:</p>
+                        <div class="code-example">
+                            <div>Otázka: Pravý uhol má ... stupňov</div>
+                            <div style="margin-top: 8px;"><span class="correct">✓ Správne: 90</span></div>
+                        </div>
+                        <p style="font-size: 12px; color: #166534;">Medzery a malá/VEĽKÁ písmena sa ignorujú</p>
+                    </div>
+                </div>
+
+                <!-- Tips -->
+                <div class="tip-box">
+                    <strong>💡</strong>
+                    <p><strong>Tip:</strong> Ak si nie ste istí, kliknite na "Zobraziť vysvetlenie" po skončení testu</p>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="modal-footer">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="understoodCheckbox">
+                    <span>Rozumiem pokynov a som pripravený</span>
+                </label>
+                <button class="btn btn-secondary" onclick="closeModal()">Zatvoriť</button>
+                <button class="btn btn-primary" id="startBtn" onclick="startTest()" disabled>Spustiť test</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const understoodCheckbox = document.getElementById('understoodCheckbox');
+        const startBtn = document.getElementById('startBtn');
+        const overlay = document.getElementById('instructionsOverlay');
+
+        // Enable/disable start button based on checkbox
+        understoodCheckbox.addEventListener('change', () => {
+            startBtn.disabled = !understoodCheckbox.checked;
+        });
+
+        function closeModal() {
+            overlay.style.display = 'none';
+        }
+
+        function startTest() {
+            // Just close the modal - questions are already loading on the page
+            overlay.style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
